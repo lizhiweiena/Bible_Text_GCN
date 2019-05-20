@@ -26,6 +26,7 @@ def save_as_pickle(filename, data):
     with open(completeName, 'wb') as output:
         pickle.dump(data, output)
 
+# The implementation of the two-layer GCN architecture in PyTorch is given below.
 class gcn(nn.Module):
     def __init__(self, X_size, A_hat, bias=True): # X_size = num features
         super(gcn, self).__init__()

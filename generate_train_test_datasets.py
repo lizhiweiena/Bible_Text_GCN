@@ -79,7 +79,7 @@ if __name__=="__main__":
     df_data["c"] = df_data["c"].apply(lambda x: nltk.word_tokenize(x)).apply(lambda x: filter_tokens(x, stopwords))
     save_as_pickle("df_data.pkl", df_data)
     
-    ### Tfidf
+    ### 1. Tfidf
     vectorizer = TfidfVectorizer(input="content", max_features=None, tokenizer=dummy_fun, preprocessor=dummy_fun)
     vectorizer.fit(df_data["c"])
     df_tfidf = vectorizer.transform(df_data["c"])
@@ -88,7 +88,7 @@ if __name__=="__main__":
     vocab = np.array(vocab)
     df_tfidf = pd.DataFrame(df_tfidf,columns=vocab)
     
-    ### PMI between words
+    ### 2.1 PMI between words
     window = 10 # sliding window size to calculate point-wise mutual information between words
     names = vocab
     occurrences = OrderedDict((name, OrderedDict((name, 0) for name in names)) for name in names)
@@ -106,7 +106,7 @@ if __name__=="__main__":
     df_occurences = pd.DataFrame(occurrences, columns=occurrences.keys())
     df_occurences = (df_occurences + df_occurences.transpose())/2 ## symmetrize it as window size on both sides may not be same
     del occurrences
-    ### convert to PMI
+    ### 2.2 convert to PMI
     p_i = df_occurences.sum(axis=0)/no_windows
     p_ij = df_occurences/no_windows
     del df_occurences
@@ -118,11 +118,11 @@ if __name__=="__main__":
     for col in p_ij.columns:
         p_ij[col] = p_ij[col].apply(lambda x: math.log(x))
         
-    ### Build graph
+    ### 3.1 Build graph
     G = nx.Graph()
     G.add_nodes_from(df_tfidf.index) ## document nodes
     G.add_nodes_from(vocab) ## word nodes
-    ### build edges between document-word pairs
+    ### 3.2 build edges between document-word pairs
     document_word = [(doc,w,{"weight":df_tfidf.loc[doc,w]}) for doc in df_tfidf.index for w in df_tfidf.columns]
     
     print("Building word-word edges")
