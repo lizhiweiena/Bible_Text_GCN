@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri May 10 15:25:35 2019
-
-@author: WT
+Construct the GCN and trains the model
 """
 
 import networkx as nx

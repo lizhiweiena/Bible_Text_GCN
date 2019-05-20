@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu May 16 10:58:15 2019
-
-@author: WT
+evaluate the results and misclassified labels
 """
 
 import networkx as nx

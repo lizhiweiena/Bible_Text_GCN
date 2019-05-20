@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu May  9 10:28:24 2019
-
-@author: WT
+script to compute the edges weights, build and save the graph
 """
+
 import os
 import pickle
 import pandas as pd
