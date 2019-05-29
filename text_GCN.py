@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import pickle
 import os
 
+
 def load_pickle(filename):
     completeName = os.path.join("./data/",\
                                 filename)
@@ -20,11 +21,13 @@ def load_pickle(filename):
         data = pickle.load(pkl_file)
     return data
 
+
 def save_as_pickle(filename, data):
     completeName = os.path.join("./data/",\
                                 filename)
     with open(completeName, 'wb') as output:
         pickle.dump(data, output)
+
 
 # The implementation of the two-layer GCN architecture in PyTorch is given below.
 class gcn(nn.Module):
@@ -46,7 +49,7 @@ class gcn(nn.Module):
             self.register_parameter("bias", None)
         self.fc1 = nn.Linear(130,66)
         
-    def forward(self, X): ### 2-layer GCN architecture
+    def forward(self, X):  # 2-layer GCN architecture
         X = torch.mm(X, self.weight)
         if self.bias is not None:
             X = (X + self.bias)
@@ -57,11 +60,13 @@ class gcn(nn.Module):
         X = F.relu(torch.mm(self.A_hat, X))
         return self.fc1(X)
 
+
 def evaluate(output, labels_e):
     _, labels = output.max(1); labels = labels.numpy()
     return sum([(e-1) for e in labels_e] == labels)/len(labels)
 
-### Loads model and optimizer states
+
+# Loads model and optimizer states
 def load(net, optimizer, load_best=True):
     base_path = "./data/"
     if load_best == False:
@@ -73,6 +78,7 @@ def load(net, optimizer, load_best=True):
     net.load_state_dict(checkpoint['state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer'])
     return start_epoch, best_pred
+
 
 if __name__ == "__main__":
     df_data = load_pickle("df_data.pkl")
@@ -89,7 +95,7 @@ if __name__ == "__main__":
     A_hat = degrees@A@degrees
     f = X # (n X n) X (n X n) x (n X n) X (n X n) input of net
     
-    ### stratified test samples
+    # stratified test samples
     test_idxs = []
     for b_id in df_data["b"].unique():
         dum = df_data[df_data["b"] == b_id]
@@ -130,7 +136,7 @@ if __name__ == "__main__":
         loss.backward()
         optimizer.step()
         if e % 50 == 0:
-            ### Evaluate other untrained nodes and check accuracy of labelling
+            # Evaluate other untrained nodes and check accuracy of labelling
             net.eval()
             pred_labels = net(f)
             trained_accuracy = evaluate(output[selected], labels_selected); untrained_accuracy = evaluate(pred_labels[test_idxs], labels_not_selected)

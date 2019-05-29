@@ -14,22 +14,24 @@ from text_GCN import gcn
 from sklearn.metrics import confusion_matrix
 import pandas as pd
 
+
 def load_pickle(filename):
-    completeName = os.path.join("./data/",\
-                                filename)
+    completeName = os.path.join("./data/",filename)
     with open(completeName, 'rb') as pkl_file:
         data = pickle.load(pkl_file)
     return data
 
+
 def save_as_pickle(filename, data):
-    completeName = os.path.join("./data/",\
-                                filename)
+    completeName = os.path.join("./data/",filename)
     with open(completeName, 'wb') as output:
         pickle.dump(data, output)
-        
+
+
 def evaluate(output, labels_e):
     _, labels = output.max(1); labels = labels.numpy()
     return sum([(e-1) for e in labels_e] == labels)/len(labels)
+
 
 def misclassified(df_data, pred_labels_test_idx, labels_not_selected, test_idxs, book_dict):
     for actual, pred, test_idx in zip([(e-1) for e in labels_not_selected], \
@@ -38,14 +40,15 @@ def misclassified(df_data, pred_labels_test_idx, labels_not_selected, test_idxs,
         if actual != pred:
             print("Book: %s\nChapter: %s" % (book_dict[actual+1], df_data.loc[test_idx]["c"]))
             print("Predicted as %s" % book_dict[pred+1]); print("\n")
-    
+
+
 if __name__=="__main__":
     base_path = "./data/"
-    ### Loads bible data
+    # Loads bible data
     df = pd.read_csv(os.path.join(base_path,"t_bbe.csv"))
     df.drop(["id", "v"], axis=1, inplace=True)
     df = df[["t","c","b"]]
-    ### one chapter per document, labelled by book
+    # one chapter per document, labelled by book
     df_data = pd.DataFrame(columns=["c", "b"])
     for book in df["b"].unique():
         dum = pd.DataFrame(columns=["c", "b"])
@@ -56,7 +59,7 @@ if __name__=="__main__":
     book_dict = pd.read_csv(os.path.join(base_path, "key_english.csv"))
     book_dict = {book.lower():number for book, number in zip(book_dict["field.1"], book_dict["field"])}
     book_dict = {v:k for k,v in zip(book_dict.keys(),book_dict.values())}
-    ### Loads graph data
+    # Loads graph data
     G = load_pickle("text_graph.pkl")
     A = nx.to_numpy_matrix(G, weight="weight"); A = A + np.eye(G.number_of_nodes())
     degrees = []
@@ -68,21 +71,21 @@ if __name__=="__main__":
     degrees = np.diag(degrees)
     X = np.eye(G.number_of_nodes()) # Features are just identity matrix
     A_hat = degrees@A@degrees
-    f = X # (n X n) X (n X n) x (n X n) X (n X n) input of net
+    f = X  # (n X n) X (n X n) x (n X n) X (n X n) input of net
     f = torch.from_numpy(f).float()
     
-    ### Loads labels
+    # Loads labels
     test_idxs = load_pickle("test_idxs.pkl")
     selected = load_pickle("selected.pkl")
     labels_selected = load_pickle("labels_selected.pkl")
     labels_not_selected = load_pickle("labels_not_selected.pkl")
     
-    ### Loads best model ###
+    # Loads best model ###
     checkpoint = torch.load(os.path.join(base_path,"model_best.pth.tar"))
     net = gcn(X.shape[1], A_hat)
     net.load_state_dict(checkpoint['state_dict'])
     
-    ### labels distribution
+    # labels distribution
     fig = plt.figure(figsize=(15,17))
     ax = fig.add_subplot(111)
     ax.hist([(e-1) for e in labels_not_selected] + [(e-1) for e in labels_selected], bins=66)
@@ -100,7 +103,7 @@ if __name__=="__main__":
     ax.set_ylabel("Counts", fontsize=17)
     [x.set_fontsize(15) for x in ax.get_xticklabels()]; [x.set_fontsize(15) for x in ax.get_yticklabels()]
     plt.savefig(os.path.join("./data/", "test_true_idxs_dist.png"))
-    ### Inference
+    # Inference
     net.eval()
     pred_labels = net(f)
     c_m = confusion_matrix([(e-1) for e in labels_not_selected], list(pred_labels[test_idxs].max(1)[1].numpy()))
@@ -111,5 +114,5 @@ if __name__=="__main__":
     ax.set_xlabel("Actual class", fontsize=17)
     ax.set_ylabel("Predicted", fontsize=17)
     plt.savefig(os.path.join("./data/", "confusion_matrix.png"))
-    #### Prints misclassified labels
+    # Prints misclassified labels
     misclassified(df_data, pred_labels[test_idxs], labels_not_selected, test_idxs, book_dict)
